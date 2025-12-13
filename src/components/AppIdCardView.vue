@@ -1,5 +1,5 @@
 <script setup>
-import { Button, Cell, CellGroup, showConfirmDialog, Empty, Field, NavBar, PullRefresh, showLoadingToast, closeToast, showNotify, Sticky, Popup, Switch, Checkbox, CheckboxGroup } from "vant";
+import { Button, Cell, CellGroup, showConfirmDialog, Empty, Field, NavBar, PullRefresh, showLoadingToast, closeToast, showNotify, Sticky, Popup, Switch, Checkbox, CheckboxGroup, showSuccessToast } from "vant";
 import router from "@/router";
 import shared from "@/shared";
 import { DeveloperDeviceType, AppId, ApplicationGroup } from "@/lib/DeveloperSession";
@@ -105,6 +105,7 @@ const downloadProfile = async (appId) => {
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
+        showSuccessToast({message: "Profile Saved"})
     } catch (e) {
         showNotify({ type: "danger", message: e?.message || String(e) });
     } finally {

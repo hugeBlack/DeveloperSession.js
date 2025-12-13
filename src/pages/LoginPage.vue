@@ -6,7 +6,6 @@ import { AnisetteData } from "@/lib/AnisetteData";
 import { AppleAccount } from "@/lib/AppleAccount";
 import shared from "@/shared";
 
-const username = ref("")
 const password = ref("")
 
 const files = ref([])
@@ -27,7 +26,7 @@ watch(files, (newFiles, oldFiles) => {
     let uploaderFile = newFiles[0]
     let file = uploaderFile?.file
     if(!file) {
-        email = undefined
+        email.value = undefined
         adiConfig.value = {}
         return;
     }
@@ -75,10 +74,16 @@ async function login() {
             duration: 0
     })
     let aniData = new AnisetteData(adiConfig.value['identifier'], adiConfig.value['adiPb'])
-    let appldId = new AppleAccount(aniData)
+    let appleId = new AppleAccount(aniData)
     try {
-        let spd = await appldId.emailPasswordLogin(email.value, password.value);
-        shared.appleId.value = appldId
+        let spd = await appleId.emailPasswordLogin(email.value, password.value);
+        console.log(spd)
+        shared.appleId.value = appleId
+
+        window.localStorage.setItem("spd", JSON.stringify(appleId.spd))
+        window.localStorage.setItem("identifier", appleId.anisetteData.anisetteInfo['identifier'])
+        window.localStorage.setItem("adi_pb", appleId.anisetteData.anisetteInfo['adi_pb'])
+
         closeToast();
         router.push("/")
     } catch(e) {

@@ -27,6 +27,7 @@ const teamPickerColunms = computed(() => {
 const teamPickerValues = ref([0])
 const showPicker = ref(false)
 const teamName = computed(() => selectedTeam.value ? selectedTeam.value.name : '')
+const email = ref("")
 
 function topRightButtonClicked() {
     if(isLogIn.value) {
@@ -36,25 +37,45 @@ function topRightButtonClicked() {
 
         teams.value = []
         selectedTeam.value = undefined
+        shared.clearLocalStorage()
     } else {
         router.push("/login")
     }
 }
 
+const reloadTeams = async () => {
+    let saveCredentials = false
+    if (!(shared.session?.teams) || shared.session?.teams?.length == 0) {
+        saveCredentials = true
+        showLoadingToast({
+            message: 'Loading Teams',
+            forbidClick: true,
+            duration: 0
+        })
+    }
+    email.value = shared.appleId.value.email
+    teams.value = await ((await shared.getSession()).listTeams());
+    selectedTeam.value = await shared.getSelectedTeam();
+    if (saveCredentials) {
+        window.localStorage.setItem("xcodeToken", JSON.stringify(shared.appleId.value.tokens['com.apple.gs.xcode.auth']))
+    }
+    closeToast()
+}
+
 onMounted(async ()=> {
     if(isLogIn.value) {
         try {
-            if (!(shared.session?.teams) || shared.session?.teams?.length == 0) {
-                showLoadingToast({
-                    message: 'Loading Teams',
-                    forbidClick: true,
-                    duration: 0
-                })
-            }
-            teams.value = await ((await shared.getSession()).listTeams());
-            selectedTeam.value = await shared.getSelectedTeam();
-            closeToast()
+            await reloadTeams()
         } catch (e) {
+            showNotify({ type: 'danger', message: e.toString()});
+        }
+    } else {
+        try {
+            let loadSuccess = shared.loadAccountFromLocalStorage()
+            if (loadSuccess) {
+                await reloadTeams()
+            }
+        } catch(e) {
             showNotify({ type: 'danger', message: e.toString()});
         }
     }
@@ -75,6 +96,7 @@ const onTeamPickerConfirm = () => {
 
     <!-- <Button @click="authenticate">NMSL</Button> -->
     <CellGroup v-if="isLogIn" title="Apple ID Management" inset>
+        <Cell title="Email" :value="email"/>
         <Field
             :model-value="teamName"
             is-link

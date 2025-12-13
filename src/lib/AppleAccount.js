@@ -154,7 +154,6 @@ class AppleAccount {
             // CASE 2: No 'au' key is present. This is a SUCCESS.
             // Return the parsed session data.
             this.email = username;
-            console.log("spd = ", parsedSpd)
             return parsedSpd;
         }
     }
