@@ -55,7 +55,12 @@ function loadAccountFromLocalStorage() {
     aid.email = spd['acname']
     aid.spd = spd
     if(xcodeToken !== null) {
-        aid.tokens["com.apple.gs.xcode.auth"] = xcodeToken
+        try {
+            aid.tokens["com.apple.gs.xcode.auth"] = JSON.parse(xcodeToken)
+        } catch(e) {
+            console.log("failed to parse xcode token " + e.toString())
+            return false
+        }
     }
     appleId.value = aid
     session = new DeveloperSession(aid)

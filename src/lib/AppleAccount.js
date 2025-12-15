@@ -330,7 +330,7 @@ class AppleAccount {
             responseDict.Status.ec !== 0
         ) {
             throw new Error(
-                responseDict.Status.em || "GSA returned an error response."
+                "Failed to get app token: " + ( `${responseDict.Status.em} (${responseDict.Status.ec})` || "GSA returned an error response.")
             );
         }
 
