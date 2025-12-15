@@ -91,6 +91,7 @@ const deleteAppId = async (appId) => {
 
 const downloadProfile = async (appId) => {
     const toast = showLoadingToast({ message: "Downloading profile...", duration: 0, forbidClick: true });
+    let isDownloaded = false
     try {
         const session = await shared.getSession();
         const currentTeam = await shared.getSelectedTeam();
@@ -105,11 +106,14 @@ const downloadProfile = async (appId) => {
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
-        showSuccessToast({message: "Profile Saved"})
+        isDownloaded = true
     } catch (e) {
         showNotify({ type: "danger", message: e?.message || String(e) });
     } finally {
         closeToast();
+    }
+    if(isDownloaded) {
+        showSuccessToast({message: "Profile Saved"})
     }
 };
 

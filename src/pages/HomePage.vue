@@ -59,7 +59,6 @@ const reloadTeams = async () => {
     if (saveCredentials) {
         window.localStorage.setItem("xcodeToken", JSON.stringify(shared.appleId.value.tokens['com.apple.gs.xcode.auth']))
     }
-    closeToast()
 }
 
 onMounted(async ()=> {
@@ -68,6 +67,8 @@ onMounted(async ()=> {
             await reloadTeams()
         } catch (e) {
             showNotify({ type: 'danger', message: e.toString()});
+        } finally {
+            closeToast()
         }
     } else {
         try {
@@ -77,6 +78,8 @@ onMounted(async ()=> {
             }
         } catch(e) {
             showNotify({ type: 'danger', message: e.toString()});
+        } finally {
+            closeToast()
         }
     }
 })
@@ -97,11 +100,11 @@ const onTeamPickerConfirm = () => {
     <!-- <Button @click="authenticate">NMSL</Button> -->
     <CellGroup v-if="isLogIn" title="Apple ID Management" inset>
         <Cell title="Email" :value="email"/>
-        <Field
-            :model-value="teamName"
+        <Cell
+            :value="teamName"
             is-link
             readonly
-            label="Team"
+            title="Team"
             placeholder="Select Team"
             @click="showPicker = true"
         />
@@ -112,7 +115,7 @@ const onTeamPickerConfirm = () => {
 
     </CellGroup>
     <CellGroup title="Utilities" v-if="isLogIn" inset>
-        <Cell title="Fix SideStore Unavailable" />
+        <Cell title="Fix &quot;App is no longer available&quot;" is-link @click="router.push('/installed-apps')" />
     </CellGroup>
 
     <CellGroup title=" " v-if="!isLogIn" inset>

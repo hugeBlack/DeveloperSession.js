@@ -94,6 +94,7 @@ const deleteGroup = async (group) => {
           :key="group.applicationGroup"
           :title="group.name"
           :label="group.identifier"
+          class="cell1"
         >
           <template #right-icon>
             <Button size="small" type="danger" plain @click.stop="deleteGroup(group)">Delete</Button>

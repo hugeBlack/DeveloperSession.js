@@ -62,12 +62,6 @@ function loadAccountFromLocalStorage() {
     return true
 }
 
-function saveAccountToLocalStorage() {
-
-
-    
-}
-
 function clearLocalStorage() {
     window.localStorage.removeItem("spd")
     window.localStorage.removeItem("identifier")

@@ -63,6 +63,7 @@ const revoke = async (cert) => {
           :key="cert.serialNumber"
           :title="cert.name"
           :label="`Serial: ${cert.serialNumber} | Machine: ${cert.machineName || 'Unknown'}`"
+          class="cell1"
         >
           <template #right-icon>
             <Button size="small" type="danger" plain @click.stop="revoke(cert)">Revoke</Button>
