@@ -25,6 +25,7 @@ const supportedCapabilities = [
     { id: "GAME_CENTR", label: "Game Center" },
     { id: "AUTOFILL_CREDENTIAL_PROVIDER", label: "Autofill Credential Provider" },
     { id: "WIRELESS_ACCESSORY_CONFIGURATION", label: "Wireless Accessory Configuration" },
+    { id: "INTER_APP_AUDIO", label: "Inter App Audio" }
 ];
 
 const team = ref(undefined);

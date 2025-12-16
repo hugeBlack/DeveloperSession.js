@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { Button, Cell, CellGroup, Empty, NavBar, PullRefresh, Sticky, showLoadingToast, closeToast, showNotify } from "vant";
+import { Button, Cell, CellGroup, Empty, NavBar, PullRefresh, Sticky, showLoadingToast, closeToast, showNotify, showDialog, showSuccessToast } from "vant";
 import router from "@/router";
 import shared from "@/shared";
-import { DeveloperDeviceType } from "@/lib/DeveloperSession";
+import { DeveloperDeviceType, AppId, DeveloperSession, DeveloperTeam, ApplicationGroup } from "@/lib/DeveloperSession";
 import { getBackgroundClient } from "@/lib/BackgroundClient";
 
 const apps = ref([]);
@@ -15,6 +15,72 @@ const team = ref(undefined);
 const isLoggedIn = computed(() => !!shared.appleId.value);
 
 const goBack = () => router.back();
+
+const entitlementKeyToId = {
+    "com.apple.developer.kernel.increased-memory-limit": { id: "INCREASED_MEMORY_LIMIT", label: "Increased Memory Limit" },
+    "com.apple.developer.healthkit": { id: "HEALTHKIT", label: "HealthKit" },
+    "com.apple.security.application-groups": { id:  "APP_GROUPS", label: "App Groups" },
+    "com.apple.developer.homekit": { id: "HOMEKIT", label: "HomeKit" },
+    "com.apple.developer.game-center": { id: "GAME_CENTR", label: "Game Center" },
+    "com.apple.developer.authentication-services.autofill-credential-provider": { id: "AUTOFILL_CREDENTIAL_PROVIDER", label: "Autofill Credential Provider" },
+    "com.apple.external-accessory.wireless-configuration": { id: "WIRELESS_ACCESSORY_CONFIGURATION", label: "Wireless Accessory Configuration" },
+    "inter-app-audio": { id: "INTER_APP_AUDIO", label: "Inter App Audio" },
+}
+
+const ignoredEntitlementKeys = [
+    "com.apple.developer.healthkit.background-delivery",
+    "com.apple.developer.healthkit.access",
+    "com.apple.developer.team-identifier",
+    "get-task-allow",
+    "keychain-access-groups",
+    "application-identifier"
+]
+
+/**
+ * @param {DeveloperSession} session
+ * @param {AppId} appId 
+ * @param entitlementsDict 
+ */
+const registerEntitlements = async (session, team, appId, entitlementsDict) => {
+    let unknownList = []
+    let errorList = []
+    for(let key in entitlementsDict) {
+        if(ignoredEntitlementKeys.includes(key)) {
+            continue;
+        }
+        if(!(key in entitlementKeyToId)) {
+            unknownList.push(key)
+            continue
+        }
+        let entitlementId = entitlementKeyToId[key].id
+        try {
+            await session.v1SetBundleBoolCapability(team, appId, { id: entitlementId },true)
+        } catch(e) {
+            errorList.push({"key": key, error: e})
+        }
+    }
+    if("com.apple.security.application-groups" in entitlementsDict) {
+        let groups = entitlementsDict["com.apple.security.application-groups"]
+        try {
+            let registeredGroups = await session.listApplicationGroups(DeveloperDeviceType.Ios, team);
+            const requestedGroups = (Array.isArray(groups) ? groups : [groups]).filter(Boolean);
+            if (requestedGroups.length) {
+                const missing = requestedGroups.filter(identifier => !registeredGroups.some(group => group.identifier === identifier));
+                if (missing.length) {
+                    const created = await Promise.all(missing.map(identifier => session.addApplicationGroup(DeveloperDeviceType.Ios, team, identifier, identifier)));
+                    registeredGroups = registeredGroups.concat(created);
+                }
+                const targetGroups = registeredGroups
+                    .filter(group => requestedGroups.includes(group.identifier))
+                    .map(group => group.applicationGroup);
+                await session.assignApplicationGroupToAppId(DeveloperDeviceType.Ios, team, appId, targetGroups);
+            }
+        } catch(e) {
+            errorList.push({"key": "assignApplicationGroupToAppId", error: e.toString()})
+        }
+    }
+    return {unknownList, errorList}
+}
 
 const decodeProfile = (encodedProfile) => {
     if (!encodedProfile) return new Uint8Array();
@@ -67,19 +133,26 @@ const refresh = async () => {
 
 const ensureAppId = async (app) => {
     const bundleId = app.CFBundleIdentifier;
-    const existing = appIds.value.find((id) => id.identifier === bundleId);
-    if (existing) return existing;
-
+    var appId = appIds.value.find((id) => id.identifier === bundleId);
     const session = await shared.getSession();
     const currentTeam = team.value || (await shared.getSelectedTeam());
-    const name = app.CFBundleName || bundleId;
-    await session.addAppId(DeveloperDeviceType.Ios, currentTeam, name, bundleId);
-    await loadAppIds(currentTeam);
-    const created = appIds.value.find((id) => id.identifier === bundleId);
-    if (!created) {
-        throw new Error("App ID registration succeeded but could not be found.");
+    if (!appId) {
+        const name = app.CFBundleName || bundleId;
+        await session.addAppId(DeveloperDeviceType.Ios, currentTeam, name, bundleId);
+        await loadAppIds(currentTeam);
+        appId = appIds.value.find((id) => id.identifier === bundleId);
+        if (!appId) {
+            throw new Error("App ID registration succeeded but could not be found.");
+        }
     }
-    return created;
+    let enableEntitlementErrorInfo = await registerEntitlements(session, currentTeam, appId, app.Entitlements)
+    if(enableEntitlementErrorInfo.errorList.length > 0 || enableEntitlementErrorInfo.unknownList > 0) {
+        showDialog({
+            "title": "Error While Enabling Entitlements",
+            "message": `The app contains unknown entitlements: ${enableEntitlementErrorInfo.unknownList.join(",")}. Failed to enable the following entitlemts: ${JSON.stringify(enableEntitlementErrorInfo.errorList)}. Your app may not work.`
+        })
+    }
+    return appId;
 };
 
 const handleProvision = async (app) => {
@@ -90,6 +163,7 @@ const handleProvision = async (app) => {
     const bundleId = app.CFBundleIdentifier;
     installingBundleId.value = bundleId;
     showLoadingToast({ message: "Preparing profile...", duration: 0, forbidClick: true });
+    let success = false;
     try {
         const session = await shared.getSession();
         const currentTeam = team.value || (await shared.getSelectedTeam());
@@ -101,12 +175,15 @@ const handleProvision = async (app) => {
         }
         const bg = getBackgroundClient();
         await bg.installProfile(bytes);
-        showNotify({ type: "success", message: "Profile installed on device." });
+        success = true
     } catch (e) {
         showNotify({ type: "danger", message: e?.message || String(e) });
     } finally {
         installingBundleId.value = "";
         closeToast();
+    }
+    if(success) {
+        showSuccessToast({message: "Profile Installed"})
     }
 };
 
