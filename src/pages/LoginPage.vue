@@ -47,13 +47,13 @@ watch(files, (newFiles, oldFiles) => {
             files.value = []
             return
         }
-        if(txtJson['adiPb'] === undefined) {
-            showNotify({ type: 'danger', message: "The account config file does not contain adiPb."});
+        if(txtJson['adiPB'] === undefined) {
+            showNotify({ type: 'danger', message: "The account config file does not contain adiPB."});
             files.value = []
             return;
         }
         adiConfig.value['identifier'] = txtJson['local_user']
-        adiConfig.value['adiPb'] = txtJson['adiPb']
+        adiConfig.value['adiPB'] = txtJson['adiPB']
         if('email' in txtJson) {
             email.value = txtJson['email']
         }
@@ -74,7 +74,7 @@ async function login() {
             forbidClick: true,
             duration: 0
     })
-    let aniData = new AnisetteData(adiConfig.value['identifier'], adiConfig.value['adiPb'])
+    let aniData = new AnisetteData(adiConfig.value['identifier'], adiConfig.value['adiPB'])
     let appleId = new AppleAccount(aniData)
     try {
         let spd = await appleId.emailPasswordLogin(email.value, password.value, () => {
@@ -150,7 +150,7 @@ async function cancel2fa() {
     </CellGroup>
     <div style="margin: 16px;">
         <Button round block type="primary" native-type="submit" 
-            :disabled="!email || !password || !('identifier' in adiConfig) || !('adiPb' in adiConfig)" 
+            :disabled="!email || !password || !('identifier' in adiConfig) || !('adiPB' in adiConfig)" 
             @click="is2faInProgress ? enter2faCode() : login()"
         >
             Login

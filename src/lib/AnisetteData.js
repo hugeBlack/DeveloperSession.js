@@ -35,7 +35,7 @@ class AnisetteData {
                 const anisetteData = response.data;
 
                 if (anisetteData["X-Apple-I-MD-M"] === undefined) {
-                    throw Error("Failed to get anisette headers: " + this.anisetteData['message'])
+                    throw Error("Failed to get anisette headers: " + anisetteData['message'])
                 }
                 if(!this.clientInfo){
                     const clientInfoResponse = await axios.get(AN_URL + "/v3/client_info")
@@ -84,7 +84,7 @@ class AnisetteData {
                 `Failed to query anisette server at ${AN_URL}. Please ensure it's running.`
             );
             // It's better to throw an error here than to continue with an invalid request
-            throw new Error("Anisette server is unavailable.");
+            throw new Error("Anisette server is unavailable. " + e.toString());
         } 
     }
 }
