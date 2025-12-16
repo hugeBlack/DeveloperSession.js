@@ -77,7 +77,6 @@ class AnisetteData {
             } else {
                 const now = new Date().toISOString();
                 this.anisetteDict["X-Apple-I-Client-Time"] = now.replace('+00:00', 'Z')
-                console.log("resuing anisetteDict!")
             }
             return { anisetteData: this.anisetteDict };
         } catch (e) {

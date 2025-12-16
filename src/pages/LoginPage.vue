@@ -7,14 +7,15 @@ import { AppleAccount } from "@/lib/AppleAccount";
 import shared from "@/shared";
 
 const password = ref("")
-
+const twofaCode = ref("")
 const files = ref([])
 const email = ref('')
 const adiConfig = ref({})
-
+const is2faInProgress = ref(false)
 const goBack = () =>{
     router.go(-1)
 }
+let twofaPromiseFunc = undefined
 
 // read and show email
 watch(files, (newFiles, oldFiles) => {
@@ -76,7 +77,14 @@ async function login() {
     let aniData = new AnisetteData(adiConfig.value['identifier'], adiConfig.value['adiPb'])
     let appleId = new AppleAccount(aniData)
     try {
-        let spd = await appleId.emailPasswordLogin(email.value, password.value);
+        let spd = await appleId.emailPasswordLogin(email.value, password.value, () => {
+            return new Promise((resolve, reject) => {
+                closeToast();
+                twofaCode.value = ""
+                is2faInProgress.value = true
+                twofaPromiseFunc = [resolve, reject]
+            })
+        });
         console.log(spd)
         shared.appleId.value = appleId
 
@@ -87,9 +95,34 @@ async function login() {
         closeToast();
         router.push("/")
     } catch(e) {
+        is2faInProgress.value = false
         closeToast();
         showNotify({ type: 'danger', message: e.toString()});
         return;
+    }
+}
+
+async function enter2faCode() {
+    if(twofaPromiseFunc === undefined) {
+        showNotify({ type: 'danger', message: "Maybe login first?"});
+        return;
+    }
+    if(!(/^[0-9]{6}$/g.test(twofaCode.value))) {
+        showNotify({ type: 'danger', message: "2FA code should be 6-digit number."});
+        return;
+    }
+    showLoadingToast({
+        message: 'Signing in...',
+        forbidClick: true,
+        duration: 0
+    })
+    twofaPromiseFunc[0](twofaCode.value)
+}
+
+async function cancel2fa() {
+    if(twofaPromiseFunc !== undefined) {
+        twofaPromiseFunc[1]("2FA was cancelled by the user.")
+        is2faInProgress.value = false;
     }
 }
 
@@ -109,14 +142,23 @@ async function login() {
                 </Uploader>
             </template>
         </Field>
-        <Field label="Email"name="email" placeholder="example@example.com" v-model="email" />
+        <Field label="Email"name="email" placeholder="example@example.com" v-model="email" :disabled="is2faInProgress"/>
 
         <Field v-model="password" type="password" name="password" label="Password" placeholder="Password"
-            :rules="[{ required: true, message: 'Apple ID\'s password is required.' }]" />
+            :rules="[{ required: true, message: 'Apple ID\'s password is required.' }]" :disabled="is2faInProgress" />
+        <Field v-model="twofaCode" v-show="is2faInProgress" name="password" label="2FA Code" placeholder="2FA Code Required"/>
     </CellGroup>
     <div style="margin: 16px;">
-        <Button round block type="primary" native-type="submit" :disabled="!email || !password || !('identifier' in adiConfig) || !('adiPb' in adiConfig)" @click="login">
+        <Button round block type="primary" native-type="submit" 
+            :disabled="!email || !password || !('identifier' in adiConfig) || !('adiPb' in adiConfig)" 
+            @click="is2faInProgress ? enter2faCode() : login()"
+        >
             Login
+        </Button>
+    </div>
+    <div style="margin: 16px;">
+        <Button round block v-show="is2faInProgress" @click="cancel2fa" type="danger">
+            Cancel
         </Button>
     </div>
 </template>

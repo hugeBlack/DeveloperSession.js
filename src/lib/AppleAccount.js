@@ -149,7 +149,7 @@ class AppleAccount {
                 await this.trustedSecondFactor(parsedSpd.adsid, parsedSpd.GsIdmsToken, twofaCallback);
             }
             // After 2FA is complete, re-run the entire authentication flow.
-            return this.gsaAuthenticate(username, password, second_factor);
+            return this.emailPasswordLogin(username, password, twofaCallback);
         } else {
             // CASE 2: No 'au' key is present. This is a SUCCESS.
             // Return the parsed session data.
@@ -403,7 +403,7 @@ class AppleAccount {
     async trustedSecondFactor(dsid, idmsToken, twofaCallback) {
         const identityToken = Buffer.from(`${dsid}:${idmsToken}`).toString("base64");
 
-        const { anisetteData } = await generateAnisetteHeaders();
+        const { anisetteData } = await this.anisetteData.generateAnisetteHeaders();
 
         const headers = {
             Accept: "application/json, text/javascript, */*", // FIX: Correct Accept header
@@ -424,7 +424,6 @@ class AppleAccount {
             timeout: 10000,
         });
 
-        console.log(res2)
         const code = await twofaCallback();
         headers["security-code"] = code;
         headers["Accept"] = "text/x-xml-plist";
@@ -454,7 +453,7 @@ class AppleAccount {
     async smsSecondFactor(dsid, idmsToken, twofaCallback) {
         const identityToken = Buffer.from(`${dsid}:${idmsToken}`).toString("base64");
 
-        const { anisetteData } = await generateAnisetteHeaders();
+        const { anisetteData } = await this.anisetteData.generateAnisetteHeaders();
 
         const headers = {
             "Content-Type": "application/json", // FIX: Set correct Content-Type

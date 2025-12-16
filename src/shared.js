@@ -72,6 +72,9 @@ function clearLocalStorage() {
     window.localStorage.removeItem("identifier")
     window.localStorage.removeItem("adi_pb")
     window.localStorage.removeItem("xcodeToken")
+    appleId.value = undefined
+    session = undefined
+    selectedTeam = undefined
 }
 
 export default {
