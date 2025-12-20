@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev2": "vite --mode ish",
     "build": "vite build",
+    "build2": "vite build --mode ish",
     "preview": "vite preview"
   },
   "dependencies": {

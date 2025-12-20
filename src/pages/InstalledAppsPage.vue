@@ -4,7 +4,7 @@ import { Button, Cell, CellGroup, Empty, NavBar, PullRefresh, Sticky, showLoadin
 import router from "@/router";
 import shared from "@/shared";
 import { DeveloperDeviceType, AppId, DeveloperSession, DeveloperTeam, ApplicationGroup } from "@/lib/DeveloperSession";
-import { getBackgroundClient } from "@/lib/BackgroundClient";
+import { getBackgroundClient } from 'BackgroundClient'
 
 const apps = ref([]);
 const appIds = ref([]);
@@ -110,18 +110,18 @@ const loadAppIds = async (currentTeam) => {
 };
 
 const refresh = async () => {
-    if (!isLoggedIn.value) {
-        showNotify({ type: "warning", message: "Please log in first." });
-        return;
-    }
+    // if (!isLoggedIn.value) {
+    //     showNotify({ type: "warning", message: "Please log in first." });
+    //     return;
+    // }
 
     refreshing.value = true;
     try {
+        const bg = getBackgroundClient();
         const session = await shared.getSession();
         const currentTeam = await shared.getSelectedTeam();
         team.value = currentTeam;
         await loadAppIds(currentTeam);
-        const bg = getBackgroundClient();
         const installed = await bg.getInstalledAppsByTeamId(currentTeam.teamId);
         apps.value = Array.isArray(installed) ? installed : [];
     } catch (e) {

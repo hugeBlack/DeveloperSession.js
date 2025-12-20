@@ -1,0 +1,15 @@
+{
+    "author": "author name",
+    "desc": "tool desc",
+    "capabilities": {
+        "internet_access": true
+    },
+    "required_idevice_functions": [
+        "installation_proxy_connect",
+        "installation_proxy_get_apps",
+        "misagent_connect",
+        "misagent_install",
+        "nsdata_create",
+        "nsdata_free"
+    ]
+}
