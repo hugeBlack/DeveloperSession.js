@@ -91,7 +91,7 @@ async function login() {
         window.localStorage.setItem("spd", JSON.stringify(appleId.spd))
         window.localStorage.setItem("identifier", appleId.anisetteData.anisetteInfo['identifier'])
         window.localStorage.setItem("adi_pb", appleId.anisetteData.anisetteInfo['adi_pb'])
-
+        window.localStorage.setItem("clientInfo", appleId.anisetteData.clientInfo)
         closeToast();
         router.push("/")
     } catch(e) {

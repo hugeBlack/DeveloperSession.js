@@ -42,6 +42,7 @@ function loadAccountFromLocalStorage() {
     let spd = window.localStorage.getItem("spd")
     let identifier = window.localStorage.getItem("identifier")
     let adi_pb = window.localStorage.getItem("adi_pb")
+    let clientInfo = window.localStorage.getItem("clientInfo")
     let xcodeToken = window.localStorage.getItem("xcodeToken")
     if(spd === null || identifier === null || adi_pb === null) {
         return false
@@ -51,6 +52,9 @@ function loadAccountFromLocalStorage() {
     spd['sk'] = new Uint8Array(spd.sk.data)
 
     let ani = new AnisetteData(identifier, adi_pb)
+    if(clientInfo !== null) {
+        ani.clientInfo = clientInfo
+    }
     let aid = new AppleAccount(ani)
     aid.email = spd['acname']
     aid.spd = spd

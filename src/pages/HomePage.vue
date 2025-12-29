@@ -97,7 +97,6 @@ const onTeamPickerConfirm = () => {
         <NavBar :right-text="isLogIn ? 'Logout': 'Login'" title="Apple ID Management" @click-right="topRightButtonClicked"/>
     </Sticky>
 
-    <!-- <Button @click="authenticate">NMSL</Button> -->
     <CellGroup v-if="isLogIn" title="Apple ID Management" inset>
         <Cell title="Email" :value="email"/>
         <Cell
