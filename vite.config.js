@@ -16,9 +16,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
-        'BackgroundClient': fileURLToPath(new URL(env.VITE_IS_ISH
-          ? './src/lib/BackgroundClientISH.js'
-          : './src/lib/BackgroundClientMiniTool.js', import.meta.url))
+        'BackgroundClient': fileURLToPath(new URL('./src/lib/BackgroundClientISH.js', import.meta.url))
       },
     },
     server: {
