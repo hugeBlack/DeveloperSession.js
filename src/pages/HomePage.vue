@@ -111,6 +111,7 @@ const onTeamPickerConfirm = () => {
         <Cell title="App IDs" is-link @click="router.push('/app-ids')" />
         <Cell title="Application Groups" is-link @click="router.push('/application-groups')" />
         <Cell title="Certificates" is-link @click="router.push('/certificates')" />
+        <Cell title="Devices" is-link @click="router.push('/devices')" />
 
     </CellGroup>
     <CellGroup title="Utilities" v-if="isLogIn" inset>

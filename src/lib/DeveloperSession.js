@@ -96,6 +96,28 @@ class ProvisioningProfile {
     encodedProfile;
 }
 
+class Device {
+    /** @type {string} */
+    deviceId;
+    /** @type {string} */
+    name;
+    /** @type {string} */
+    deviceNumber;
+    /** @type {string} */
+    devicePlatform;
+    /** @type {string} */
+    status;
+    /** @type {string} */
+    deviceClass;
+    /** @type {Date} */
+    expirationDate
+}
+
+class DevicesResponse {
+    /** @type {Device[]} */
+    devices;
+}
+
 class V1GetBundleCapabilitiesResponse {
     dict;
 
@@ -662,6 +684,52 @@ class DeveloperSession {
 
         return await this.sendV1DeveloperRequest(url, data, "patch")
     }
+
+    /**
+     * 
+     * @param {DeveloperDeviceType | string} deviceType
+     * @param {DeveloperTeam} team
+     * @returns {DevicesResponse}
+     */
+    async listDevices(deviceType, team) {
+        let url = devUrl(deviceType, "listDevices")
+        const body = {
+            teamId: team.teamId
+        };
+        return this.sendDeveloperRequest(url, body);
+    }
+
+    /**
+     * 
+     * @param {DeveloperDeviceType | string} deviceType
+     * @param {DeveloperTeam} team
+     * @param {string} deviceName
+     * @param {string} deviceUDID
+     */
+    async addDevice(deviceType, team, deviceName, deviceUDID) {
+        let url = devUrl(deviceType, "addDevice")
+        const body = {
+            teamId: team.teamId,
+            name: deviceName,
+            deviceNumber: deviceUDID
+        };
+        return await this.sendDeveloperRequest(url, body);
+    }
+
+        /**
+     * 
+     * @param {DeveloperDeviceType | string} deviceType
+     * @param {DeveloperTeam} team
+     * @param {string} deviceID
+     */
+    async deleteDevice(deviceType, team, deviceID) {
+        let url = devUrl(deviceType, "deleteDevice")
+        const body = {
+            teamId: team.teamId,
+            deviceId: deviceID
+        };
+        return await this.sendDeveloperRequest(url, body);
+    }
 }
 
 
@@ -675,5 +743,7 @@ export {
     ListAppIdsResponse,
     ApplicationGroup,
     ProvisioningProfile,
-    V1GetBundleCapabilitiesResponse
+    V1GetBundleCapabilitiesResponse,
+    Device,
+    DevicesResponse
 }

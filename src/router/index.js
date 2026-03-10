@@ -34,6 +34,11 @@ const router = createRouter({
             name: 'certificates',
             component: () => import("@/pages/CertificatesPage.vue")
         },
+        {
+            path: '/devices',
+            name: 'devices',
+            component: () => import("@/pages/DevicesPage.vue")
+        },
 
         { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("@/pages/ErrorPage.vue") },
     ]
