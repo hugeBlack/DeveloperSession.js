@@ -31,6 +31,21 @@ class BackgroundClient {
 
     /**
      * 
+     * @returns {Promise<{
+     *  udid: string,
+     *  name: string
+     * }>}
+     */
+    async fetchDeviceInfo() {
+        let res = await axios.get("/device/fetchDeviceInfo");
+        if(res.data.error) {
+            throw new Error(res.data.error)
+        }
+        return res.data.data
+    }
+
+    /**
+     * 
      * @returns {Promise<string>}
      */
     resetHandles() {
@@ -39,6 +54,10 @@ class BackgroundClient {
 }
 
 let client = undefined
+/**
+ * 
+ * @returns {BackgroundClient}
+ */
 function getBackgroundClient() {
     if(client === undefined) {
         client = new BackgroundClient()

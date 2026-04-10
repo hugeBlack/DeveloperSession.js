@@ -716,7 +716,7 @@ class DeveloperSession {
         return await this.sendDeveloperRequest(url, body);
     }
 
-        /**
+    /**
      * 
      * @param {DeveloperDeviceType | string} deviceType
      * @param {DeveloperTeam} team

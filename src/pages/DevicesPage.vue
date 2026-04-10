@@ -4,6 +4,7 @@ import { Button, Cell, CellGroup, showConfirmDialog, Empty, Field, NavBar, PullR
 import router from "@/router";
 import shared from "@/shared";
 import { DeveloperDeviceType, Device } from "@/lib/DeveloperSession";
+import { getBackgroundClient } from 'BackgroundClient'
 
 const devices = ref([]);
 const deviceCountLeft = ref(undefined);
@@ -14,6 +15,16 @@ const deleting = ref(false);
 const team = ref(undefined);
 const newName = ref("");
 const newUdid = ref("");
+
+const registeringDevice = ref(false);
+const currentUdid = ref("");
+const currentDeviceName = ref("");
+const isCurrentDeviceRegistered = computed(() => {
+        if (!currentUdid.value) {
+        return false;
+    }
+    return !!(devices.value.find((device) => (device?.deviceNumber || "").trim() === currentUdid.value));
+})
 
 const isLoggedIn = computed(() => !!shared.appleId.value);
 
@@ -34,6 +45,15 @@ const load = async () => {
     } finally {
         loading.value = false;
         refreshing.value = false;
+    }
+
+    try {
+        const bg = getBackgroundClient();
+        let deviceInfo = await bg.fetchDeviceInfo();
+        currentUdid.value = deviceInfo.udid
+        currentDeviceName.value = deviceInfo.name
+    } catch (e) {
+        showNotify({ type: "danger", message: e?.message || String(e) });
     }
 };
 
@@ -95,6 +115,39 @@ const deviceCountTitle = computed(() => {
     }
     return "Devices";
 });
+
+
+const registerCurrentDevice = async () => {
+    if (!isLoggedIn.value) {
+        showNotify({ type: "warning", message: "Please log in first." });
+        return;
+    }
+    if (!currentUdid.value) {
+        showNotify({ type: "warning", message: "No UDID found for this device." });
+        return;
+    }
+
+    registeringDevice.value = true;
+    try {
+        const session = await shared.getSession();
+        const currentTeam = team.value || (await shared.getSelectedTeam());
+        let deviceName;
+        if(currentDeviceName.value) {
+            deviceName = currentDeviceName.value
+        } else {
+            const suffix = currentUdid.value.slice(-6);
+            deviceName = suffix ? `AppleJS Device ${suffix}` : "AppleJS Device";
+        }
+
+        await session.addDevice(DeveloperDeviceType.Ios, currentTeam, deviceName, currentUdid.value);
+        load()
+        showSuccessToast({ message: "Device registered" });
+    } catch (e) {
+        showNotify({ type: "danger", message: e?.message || String(e) });
+    } finally {
+        registeringDevice.value = false;
+    }
+};
 </script>
 
 <template>
@@ -119,6 +172,26 @@ const deviceCountTitle = computed(() => {
             </CellGroup>
             <Empty description="No Devices" v-else :image-size="120" />
         </PullRefresh>
+
+        <CellGroup inset v-if="isLoggedIn && currentUdid" title="Current Device">
+            <Cell
+                :title="currentDeviceName || 'Current Device'"
+                :label="currentUdid || 'Unavailable'"
+            >
+                <template #right-icon>
+                    <Button
+                        :disabled="isCurrentDeviceRegistered"
+                        size="small"
+                        type="primary"
+                        plain
+                        :loading="registeringDevice"
+                        @click.stop="registerCurrentDevice"
+                    >
+                        {{ isCurrentDeviceRegistered ? "Registered" : "Register" }}
+                    </Button>
+                </template>
+            </Cell>
+        </CellGroup>
 
         <CellGroup inset v-if="isLoggedIn" title=" ">
             <Field v-model="newName" label="Name" placeholder="My iPhone" />
