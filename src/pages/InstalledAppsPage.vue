@@ -131,11 +131,16 @@ const refresh = async () => {
     }
 };
 
-const ensureAppId = async (app) => {
+/**
+ * 
+ * @param app 
+ * @param {DeveloperSession} session 
+ * @param {DeveloperTeam} currentTeam 
+ */
+const ensureAppId = async (app, session, currentTeam) => {
     const bundleId = app.CFBundleIdentifier;
     var appId = appIds.value.find((id) => id.identifier === bundleId);
-    const session = await shared.getSession();
-    const currentTeam = team.value || (await shared.getSelectedTeam());
+
     if (!appId) {
         const name = app.CFBundleName || bundleId;
         await session.addAppId(DeveloperDeviceType.Ios, currentTeam, name, bundleId);
@@ -154,6 +159,21 @@ const ensureAppId = async (app) => {
     }
     return appId;
 };
+/**
+ * 
+ * @param {DeveloperSession} session 
+ * @param {DeveloperTeam} team 
+ * @param client
+ */
+const ensureDevice = async (session, team, client) => {
+    const devicesRes = await session.listDevices(DeveloperDeviceType.Ios, team);
+    const devices = devicesRes.devices;
+    const currentDevice = (await client.fetchDeviceInfo())
+    if (!!(devices.find((device) => (device?.deviceNumber || "").trim() === currentDevice.udid))) {
+        return
+    }
+    await session.addDevice(DeveloperDeviceType.Ios, team, currentDevice.name, currentDevice.udid);
+}
 
 const handleProvision = async (app) => {
     if (!isLoggedIn.value) {
@@ -166,14 +186,15 @@ const handleProvision = async (app) => {
     let success = false;
     try {
         const session = await shared.getSession();
+        const bg = getBackgroundClient();
         const currentTeam = team.value || (await shared.getSelectedTeam());
-        const appId = await ensureAppId(app);
+        await ensureDevice(session, currentTeam, bg);
+        const appId = await ensureAppId(app, session, currentTeam);
         const profile = await session.downloadTeamProvisioningProfile(DeveloperDeviceType.Ios, currentTeam, appId);
         const bytes = decodeProfile(profile?.encodedProfile);
         if (!bytes || !bytes.length) {
             throw new Error("Downloaded profile is empty.");
         }
-        const bg = getBackgroundClient();
         await bg.installProfile(bytes);
         success = true
     } catch (e) {

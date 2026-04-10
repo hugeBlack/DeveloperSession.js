@@ -354,7 +354,7 @@ class DeveloperSession {
      * List devices registered for the team.
      * @param {DeveloperDeviceType | string} deviceType
      * @param {DeveloperTeam} team
-     * @returns {Promise<Array<DeveloperDevice>>}
+     * @returns {Promise<{devices: Array<DeveloperDevice>}>}
      */
     async listDevices(deviceType, team) {
         const url = devUrl(deviceType, "listDevices");
